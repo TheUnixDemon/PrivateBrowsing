@@ -1,11 +1,33 @@
 #!/bin/bash
 
-sudo pacman -Syu firefox ecryptfs-utils sox # updating and afterwards installing resources
-sudo modprobe ecryptfs # loading module
-ecryptfs-setup-private # set up private encrypted directory
+# installs dependencies and sets up private directory
+makeInstall() {
+    echo "Required packages ..."
+    sudo pacman -Syu --noconfirm firefox ecryptfs-utils sox # updating and afterwards installing resources
 
-# setup changed directory
-MFILE="$HOME/.ecryptfs/Private.mnt"
-if [ -f $MFILE" ]; then
-    rm -rf "$MFILE" && cat > "$MFILE" <<< "$HOME/.private"
+    echo "Loading kernel module ..."
+    sudo modprobe ecryptfs # loading module
+
+    echo "Setup private directory ..."
+    ecryptfs-setup-private # set up private encrypted directory
+    exit 0
+}
+
+# creates log files
+createLog() {
+    local path=$1
+    if [[ ! -f $path ]]; then
+        touch $path
+    fi
+}
+
+# checks if ercyptfs is setup right
+if [[ -f "$MOUNTFILE" && -f "$KEYFILE" ]]; then
+    MOUNTDIR=$(cat "$MOUNTFILE")
+else
+    echo "*$MOUNTFILE* & *$KEYFILE* not found - Setup installation initialized"
+    makeInstall
 fi
+
+# creates non existing log files outside of private directory
+createLog "$APPLOG"

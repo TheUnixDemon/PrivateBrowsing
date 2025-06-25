@@ -3,5 +3,7 @@ Using Firefox (hardened by myself) and *ecryptfs-utils*. The sensitive data from
 
 ## Setup Arch Linux
 ```bash
-./src/setup.sh # install browser & ecryptfs; setting up private directory
+cd src && ./main.sh # installing dependencies automaticly (normally)
 ```
+
+Changes that could benefit are to find into the `src/env.sh` and `src/private.sh`. There are file references and options for this applications as an handler for ecryptfs.

@@ -1,59 +1,46 @@
 #!/bin/bash
 
-# setting up environmental variables
-export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export PRIVATE_MOUNT="$HOME/.private"
-
-# notifications
-notification() {
-    local message=$1 && echo "$message"
-    local numb=$2
-    if [ $SOUND -eq 1 ]; then
-        (
-            for ((i=0; i<$numb; i++)); do
-                play -n synth 0.3 sin 880 fade q 0.05 0.3 0.1 vol 0.2 > /dev/null 2>&1
-                sleep 0.1
-            done
-        ) & disown
-    fi
-}
-
-# acts like the flags are set
-run() {
-    if [ "$START_WITH" -eq 1 ]; then
-        firefox --no-remote --profile "$FIREFOX_PROFILE" > /dev/null 2> $FIREFOX_ERRLOG & # starts usually hardend firefox
-        sleep 5 # gives enough time to launch
-        if [ "$ENCRYPT_AFTER" -eq 1 ]; then # unmount/encrypt after last instance of firefox is closed
-            (
-                while true; do
-                    while pgrep -f "firefox.*$FIREFOX_PROFILE" > /dev/null || lsof +D "$PRIVATE_MOUNT" > /dev/null 2>&1; do # true until every instance of hardened firefox profile is no more
-                        sleep $ENCRYPT_IN_TIME
-                    done
-                    if ecryptfs-umount-private; then
-                        notification "successfully unmounted" 2
-                        sleep 5
-                        exit
-                    fi
-                    lsof +D "$PRIVATE_MOUNT" && notification "Some processes prevent unmounting" 1
-                    sleep $ENCRYPT_IN_TIME # problems with exiting; proper output 
-                    
-                    
-                done
-            ) & disown
+# creates firefox profile and starts firefox with it
+firefoxProfile() {
+    local PROFILEPATH=$1
+    local PROFILEPATHPRESET="$PRESET/browser/firefox"
+    FIREFOXLOG="$MOUNTDIR/browser/firefox.log" # for creating new ones if new profile is created
+    if [[ ! -d "$PROFILEPATH" ]]; then
+        echo "Creating new Firefox profile ..."
+        if [[ -d $PROFILEPATHPRESET ]] && cp -ra "$PROFILEPATHPRESET" "$PROFILEPATH"; then
+            echo "Successfully tranfered from *preset*"
+            break
+        if firefox --CreateProfile "privateEncrypt '$PROFILEPATH'"; then
+            echo "Successfully created"
+            rm -f "$FIREFOXLOG"
         fi
     fi
+    createLog "$FIREFOXLOG" # creates new log if not exiting
 }
 
-echo "$(tput setaf 1)---$(tput sgr0) You are going to start the private browsing mode $(tput setaf 1)---$(tput sgr0)"
-echo ""
-read -p "Are you sure about that? (y/n): " answer
+# will be called outside of *private.sh* -> *main.sh*
+firefoxStart() {
+    firefox --no-remote --profile "$FIREFOXLOG" > /dev/null 2> $FIREFOXLOG &
+}
 
-if [[ "$answer" == "Y" || "$answer" == "y" ]]; then
-    if ecryptfs-mount-private && mountpoint -q "$PRIVATE_MOUNT"; then
-        source $SCRIPT_DIR/privateENV.sh # loading more environment resources
-        notification "successfully mounted" 2
-        run
+# adds/correcs directory structure if needed
+validateEnvironment() {
+    local RELATIVEPATH=$1
+    if [[ ! -d "$MOUNTDIR/$RELATIVEPATH" ]]; then
+        cp -ra "$PRESET/$RELATIVEPATH" "$MOUNTDIR/$RELATIVEPATH" && echo "*$PRESET/$RELATIVEPATH* copied to *$MOUNTDIR/$RELATIVEPATH*"
     fi
-else
-    echo "Process aborted"
-fi
+}
+
+# check file/folder structure under private dir
+PRESET="$WORKINGDIR/preset"
+validateEnvironment "browser"
+validateEnvironment "env"
+
+# environment var references changed into private directories
+export HOME="$MOUNTDIR/env"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CACHE_HOME="$HOME/.cache"
+
+# firefox profile and log creation as preperation for starting it
+firefoxProfile()
