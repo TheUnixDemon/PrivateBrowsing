@@ -39,8 +39,9 @@ validateEnvironment() {
     if [[ ! -d "$MOUNTDIR/$RELATIVEPATH" ]]; then
         if [[ -d "$PRESET/$RELATIVEPATH" ]]; then
             cp -ra "$PRESET/$RELATIVEPATH" "$MOUNTDIR/$RELATIVEPATH" && echo "*$PRESET/$RELATIVEPATH* copied to *$MOUNTDIR/$RELATIVEPATH*"
-        else 
+        else # create directory structure without preset
             mkdir "$MOUNTDIR/$RELATIVEPATH" && echo "Preset can't be found; Plain directory *$MOUNTDIR/$RELATIVEPATH* was created successfully"
+        fi
     fi
 }
 
