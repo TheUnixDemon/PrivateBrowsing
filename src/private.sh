@@ -37,14 +37,22 @@ firefoxStart() {
 validateEnvironment() {
     local RELATIVEPATH=$1
     if [[ ! -d "$MOUNTDIR/$RELATIVEPATH" ]]; then
-        cp -ra "$PRESET/$RELATIVEPATH" "$MOUNTDIR/$RELATIVEPATH" && echo "*$PRESET/$RELATIVEPATH* copied to *$MOUNTDIR/$RELATIVEPATH*"
+        if [[ -d "$PRESET/$RELATIVEPATH" ]]; then
+            cp -ra "$PRESET/$RELATIVEPATH" "$MOUNTDIR/$RELATIVEPATH" && echo "*$PRESET/$RELATIVEPATH* copied to *$MOUNTDIR/$RELATIVEPATH*"
+        else 
+            mkdir "$MOUNTDIR/$RELATIVEPATH" && echo "Preset can't be found; Plain directory *$MOUNTDIR/$RELATIVEPATH* was created successfully"
     fi
 }
 
 # check file/folder structure under private dir
 PRESET="$WORKINGDIR/preset"
+# folder for profile and log data referenced to firefox
 validateEnvironment "browser"
+# environment for references, configs and locals
 validateEnvironment "env"
+validateEnvironment "env/.config"
+validateEnvironment "env/.local"; validateEnvironment "env/.local/share"
+validateEnvironment "env/.cache"
 
 # environment var references changed into private directories
 ENV="$MOUNTDIR/env"
