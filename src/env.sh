@@ -11,4 +11,4 @@ APPLOG="$WORKINGDIR/app.log"
 SOUND="true" # sox notification sound
 TIMEOUT="false" # automaticly umount after TLIMIT if no inteference
 TLIMIT=60
-USE_FIREFOX="true" # automaticly starting firefox with mounting the encrypted file system
+USE_FIREFOX="false" # automaticly starting firefox with mounting the encrypted file system
