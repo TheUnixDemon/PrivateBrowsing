@@ -1,26 +1,36 @@
 #!/bin/bash
 
 # creates firefox profile and starts firefox with it
-firefoxProfile() {
-    local PROFILEPATH=$1
-    local PROFILEPATHPRESET="$PRESET/browser/firefox"
-    FIREFOXLOG="$MOUNTDIR/browser/firefox.log" # for creating new ones if new profile is created
+firefoxProfile() { 
     if [[ ! -d "$PROFILEPATH" ]]; then
+        echo "*$PROFILEPATH* not found"
         echo "Creating new Firefox profile ..."
-        if [[ -d $PROFILEPATHPRESET ]] && cp -ra "$PROFILEPATHPRESET" "$PROFILEPATH"; then
-            echo "Successfully tranfered from *preset*"
-            break
-        if firefox --CreateProfile "privateEncrypt '$PROFILEPATH'"; then
-            echo "Successfully created"
-            rm -f "$FIREFOXLOG"
+        if [[ -d $PROFILEPATHPRESET ]] && cp -ra "$PROFILEPATHPRESET" "$PROFILEPATH"; then # if profile preset dir exists -> cp to encrypted mounted dir
+            echo "Successfully profile tranfered from preset *$PROFILEPATHPRESET* to encryption directory *$PROFILEPATH*"
+        elif firefox --no-remote --CreateProfile "$PROFILENAME $PROFILEPATH"; then #|| firefox --ProfileManager; then
+            if [[ ! -d "$PROFILEPATH" ]]; then
+                echo "The command *firefox --CreateProfile ...* was unsuccessul"
+                echo "Please create at *$PROFILEPATH* manually a profile ..."
+                firefox --no-remote --ProfileManager
+            else
+                echo "Successfully created a new profile"
+
+            fi
         fi
     fi
-    createLog "$FIREFOXLOG" # creates new log if not exiting
 }
 
 # will be called outside of *private.sh* -> *main.sh*
 firefoxStart() {
-    firefox --no-remote --profile "$FIREFOXLOG" > /dev/null 2> $FIREFOXLOG &
+    if firefoxProfile; then
+        if [[ -f "$FIREFOXLOG" ]]; then
+            rm -f "$FIREFOXLOG" && touch "$FIREFOXLOG"
+        fi
+        firefox --no-remote --profile "$PROFILEPATH" > /dev/null 2> $FIREFOXLOG &
+        if [[ $? -ne 0 ]]; then
+            echo "starting Firefox with profile located at *$PROFILEPATH* was unsuccessful"
+        fi
+    fi
 }
 
 # adds/correcs directory structure if needed
@@ -37,10 +47,14 @@ validateEnvironment "browser"
 validateEnvironment "env"
 
 # environment var references changed into private directories
-export HOME="$MOUNTDIR/env"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_CACHE_HOME="$HOME/.cache"
+ENV="$MOUNTDIR/env"
+export HOME=$ENV # comment this out if it makes problems
+export XDG_CONFIG_HOME="$ENV/.config"
+export XDG_DATA_HOME="$ENV/.local/share"
+export XDG_CACHE_HOME="$ENV/.cache"
 
-# firefox profile and log creation as preperation for starting it
-firefoxProfile()
+# firefox profile and log variables
+FIREFOXLOG="$MOUNTDIR/browser/firefox.log"
+PROFILENAME="privateEncrypt"
+PROFILEPATH="$MOUNTDIR/browser/firefox"
+PROFILEPATHPRESET="$PRESET/browser/firefox"

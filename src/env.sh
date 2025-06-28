@@ -8,7 +8,7 @@ KEYFILE="$HOME/.ecryptfs/wrapped-passphrase"
 APPLOG="$WORKINGDIR/app.log"
 
 # options
-SOUND=0 # sox notification sound
-TIMEOUT=0 # automaticly umount after TLIMIT if no inteference
+SOUND="true" # sox notification sound
+TIMEOUT="false" # automaticly umount after TLIMIT if no inteference
 TLIMIT=60
-USE_FIREFOX=0 # automaticly starting firefox with mounting the encrypted file system
+USE_FIREFOX="true" # automaticly starting firefox with mounting the encrypted file system
