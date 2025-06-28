@@ -15,7 +15,7 @@ notification() {
 
 # mount private dir (interactive)
 mountDir() {
-    echo "$(tput setaf 1)<<$(tput sgr0) Mounting encrypted directory at *$MOUNTDIR* $(tput setaf 1)>>$(tput sgr0)"
+    echo "$(tput setaf 1)<--<$(tput sgr0) Mounting encrypted directory at *$MOUNTDIR* $(tput setaf 1)>-->$(tput sgr0)"
     while true; do
         read -p "Confirm? (y/N)" answer
         case $answer in
@@ -56,9 +56,11 @@ fi
 # automatic timeout based unmound
 while true; do
     sleep $TLIMIT
+    # checks if can be is unmounted (encrypted); only if no process is using the dir possible (lsof) 
     if ! lsof +D "$MOUNTDIR" >> $APPLOG 2>&1; then
-        if ! ecryptfs-umount-private; then
+        if ! ecryptfs-umount-private; then # unmount failed
             continue
+        fi
         notification 2
         exit 0
     fi
