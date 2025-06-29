@@ -58,6 +58,7 @@ source "$WORKINGDIR/setup.sh" # locate mounting directory and setup checked
 ARG=$1 # user argument
 FARG="-f" # starting firefox
 UARG="-u" # unmounting manually
+PARG="-p" # copie everything into ./preset from umounted dir
 
 # check mounting status
 if [[ $ARG && $ARG == $UARG ]]; then
@@ -70,10 +71,15 @@ if [[ $ARG && $ARG == $UARG ]]; then
         echo "Already unmounted"
         exit 0
     fi
+
+# save current environment
+if [[ $ARG && $ARG == $PARG ]]; then
+    cp -ra "$MOUNTDIR/*" "$WORKINGDIR/preset"
+fi
+
 elif ! mountpoint -q "$MOUNTDIR"; then
     mountDir # mount private directory
-    echo "Successfully mounted"
-    notification 2
+    echo "Successfully mounted" && notification 2
 fi    
 
 source "$WORKINGDIR/private.sh" # private directory environment reference changes & firefox
