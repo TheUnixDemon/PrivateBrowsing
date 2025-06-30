@@ -62,17 +62,6 @@ export WORKINGDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # location of 
 source "$WORKINGDIR/env.sh" # basic environment variables (file locations)
 source "$WORKINGDIR/setup.sh" # locate mounting directory and setup checked
 
-# arguments for using functions without changing variables
-ARG=$1 # user argument
-FARG="-f" # starting firefox
-UARG="-u" # unmounting manually
-PARG="-p" # copie everything into ./preset from umounted dir
-
-# unmount manually
-if [[ $ARG && $ARG == $UARG ]]; then
-    unmountDir 5
-fi
-
 # save current environment
 if mountpoint -q "$MOUNTDIR" && [[ $ARG && $ARG == $PARG ]]; then
     cp -ra "$MOUNTDIR/." "$WORKINGDIR/preset"
@@ -85,7 +74,7 @@ if ! mountpoint -q "$MOUNTDIR"; then
 fi
 
 source "$WORKINGDIR/private.sh" # private directory environment reference changes & firefox
-if [[ $USE_FIREFOX == "true" || $ARG && $ARG == "$FARG" ]]; then
+if [[ $USE_FIREFOX == "true" ]]; then
     firefoxStart # starting firefox as background process and log output (look into private.sh)
 fi
 
@@ -94,8 +83,10 @@ if [[ "$TIMEOUT" == "true" ]]; then
     unmountDir $TLIMIT
 fi
 
+source "$WORKINGDIR/arg.sh" # for using arguments
+
 # starting new bash; loading config files
 if [[ "$SHLVL" -eq 2 ]] && mountpoint -q "$MOUNTDIR"; then
     bash
-    unmountDir 5 && exit 0
+    unmountDir 5 && exit 0 # unmounts & undo env changes & exits script
 fi

@@ -1,37 +1,42 @@
-# Browsing Private
+# Encrypted Directory
 
-Using *Firefox* and *ecryptfs-utils*. The sensitive data from Firefox will be saved within the private directory that is encrypted through *ecryptfs-utils*. Also you can start any applications within through the same terminal session to use the same environment location.
+Using *ecryptfs-utils* this *Bash* script makes a setup for an encrypted environment inside of the created ecryptfs directory. It' works as it is under Arch Linux based systems.
 
-For now it's out of the box only released for **Arch** based systems. But you can modify the `./src/setup.sh` to get it working with Debian or other Linux based systems that 
+## How to Use
 
-## Setup
-
-Normally you could just start the `./src/main.sh` to setup and start the script. But possibly you could also install the dependencies manually to get it working under other operating systems considering it's possible to execute bash commands. Under Arch it should install automaticly.
+Start the `src/main.sh` in a sub shell. It is using *Pacman* to install the dependencies. Also this script starts another Bash sub shell where the environment variables are loaded. If you're exiting the created sub shell the script will unmount the encrypted directory.
 
 ### Dependencies
 
-The packages can be found within the `./src/setup.sh` and will be installed with the package manager *Pacman*.
+The packages can be found within the `./src/setup.sh`.
 
 * sox
 * ecryptfs
 * firefox
 
-### Environment Variables
+### Arguments
 
-You should also look into the file `./src/private.sh` because of the environment variables that are set within. Because they relocate your configurations, caches and the hole reference to your home directory. 
+* `-u` - unmount directory
+* `-p` - copie everything into `./preset`
+* `-f` - start a Firefox instance
 
-To use it please execute the `./src/main.sh`. Additionally you can use after and while the first execution (of your current session) one simple argument at the time.
+### Start Script        » Shell Level 1 - 2
 
-#### Arguments
-
-* `-u` - manually unmount directory
-* `-f` - start a Firefox instance from within
-
-For permanent settings using variables within the bash script look into the `./src/env.sh`. There you can setup the automatic unmounting time limit and if or not Firefox should start up everytime the `./src/main.sh` is executed.
+You start the script in a sub shell when you are in Shell level **1**. So it will load up it's variables outside of your first Shell.
 
 ```bash
 #!/bin/bash
 
-# start script application
-cd ./src && ./main.sh
+./src/main.sh"
+```
+
+### Private Directory   » Shell Level 3
+
+If you are within the private environment you are within the Shell level **3**. So you should use the script only with using **source** to load the script within the same.
+(`$WORKINGDIR` - script location)
+
+```bash
+#!/bin/bash
+
+SCRIPT=$(cd "$WORKINGDIR" && source "main.sh") # for example
 ```
