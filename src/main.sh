@@ -40,17 +40,25 @@ unmountDir() {
     while true; do
         sleep $TIME
         if ! lsof +D "$MOUNTDIR" >> $APPLOG 2>&1; then
-            if ! ecryptfs-umount-private; then # unmount failed
-                continue
+            if ! mountpoint -q "$MOUNTDIR"; then
+                echo "Already unmounted"
+                returnToOriginEnv
+                exit 0
+            else
+                if returnToOriginEnv && ecryptfs-umount-private; then # unmount failed
+                    echo "Successfully unmounted & encrypted" && notification 2
+                    returnToOriginEnv
+                    exit 0
+                else
+                    continue
+                fi
             fi
-            notification 2
-            exit 0
         fi
     done
 }
 
 # environment variables & setup
-WORKINGDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # location of bash script
+export WORKINGDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # location of bash script
 source "$WORKINGDIR/env.sh" # basic environment variables (file locations)
 source "$WORKINGDIR/setup.sh" # locate mounting directory and setup checked
 
@@ -60,27 +68,21 @@ FARG="-f" # starting firefox
 UARG="-u" # unmounting manually
 PARG="-p" # copie everything into ./preset from umounted dir
 
-# check mounting status
+# unmount manually
 if [[ $ARG && $ARG == $UARG ]]; then
-    if mountpoint -q "$MOUNTDIR"; then
-        unmountDir 5
-        if ! mountpoint -q "$MOUNTDIR"; then
-            echo "Successfully unmounted & encrypted"
-        fi
-    else
-        echo "Already unmounted"
-        exit 0
-    fi
-
-# save current environment
-if [[ $ARG && $ARG == $PARG ]]; then
-    cp -ra "$MOUNTDIR/*" "$WORKINGDIR/preset"
+    unmountDir 5
 fi
 
-elif ! mountpoint -q "$MOUNTDIR"; then
-    mountDir # mount private directory
+# save current environment
+if mountpoint -q "$MOUNTDIR" && [[ $ARG && $ARG == $PARG ]]; then
+    cp -ra "$MOUNTDIR/." "$WORKINGDIR/preset"
+fi
+
+# mount directory
+if ! mountpoint -q "$MOUNTDIR"; then
+    mountDir # mounting
     echo "Successfully mounted" && notification 2
-fi    
+fi
 
 source "$WORKINGDIR/private.sh" # private directory environment reference changes & firefox
 if [[ $USE_FIREFOX == "true" || $ARG && $ARG == "$FARG" ]]; then
@@ -90,4 +92,10 @@ fi
 # automatic timeout based unmount
 if [[ "$TIMEOUT" == "true" ]]; then
     unmountDir $TLIMIT
+fi
+
+# starting new bash; loading config files
+if [[ "$SHLVL" -eq 2 ]] && mountpoint -q "$MOUNTDIR"; then
+    bash
+    unmountDir 5 && exit 0
 fi

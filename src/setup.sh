@@ -22,11 +22,15 @@ createLog() {
 }
 
 # checks if ercyptfs is setup right
-if [[ -f "$MOUNTFILE" && -f "$KEYFILE" ]]; then
-    MOUNTDIR=$(cat "$MOUNTFILE")
-else
-    echo "*$MOUNTFILE* & *$KEYFILE* not found - Setup installation initialized"
-    makeInstall
+if [[ ! $MOUNTDIR ]]; then
+    if [[ -f "$MOUNTFILE" && -f "$KEYFILE" ]]; then
+        export MOUNTDIR=$(cat "$MOUNTFILE")
+    else
+        if [[ "$SHLVL" -lt 2 ]]; then
+            echo "*$MOUNTFILE* & *$KEYFILE* not found - Setup installation initialized"
+            makeInstall
+        fi
+    fi
 fi
 
 # creates non existing log files outside of private directory

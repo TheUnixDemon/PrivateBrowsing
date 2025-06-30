@@ -38,9 +38,9 @@ validateEnvironment() {
     local RELATIVEPATH=$1
     if [[ ! -d "$MOUNTDIR/$RELATIVEPATH" ]]; then
         if [[ -d "$PRESET/$RELATIVEPATH" ]]; then
-            cp -ra "$PRESET/$RELATIVEPATH" "$MOUNTDIR/$RELATIVEPATH" && echo "*$PRESET/$RELATIVEPATH* copied to *$MOUNTDIR/$RELATIVEPATH*"
+            cp -ra "$PRESET/$RELATIVEPATH/." "$MOUNTDIR/$RELATIVEPATH" && echo "*$PRESET/$RELATIVEPATH* copied to *$MOUNTDIR/$RELATIVEPATH*" # including hidden files (/.) 
         else # create directory structure without preset
-            mkdir "$MOUNTDIR/$RELATIVEPATH" && echo "Preset can't be found; Plain directory *$MOUNTDIR/$RELATIVEPATH* was created successfully"
+            mkdir -p "$MOUNTDIR/$RELATIVEPATH" && echo "Preset can't be found; Plain directory *$MOUNTDIR/$RELATIVEPATH* was created successfully"
         fi
     fi
 }
@@ -52,10 +52,12 @@ validateEnvironment "browser"
 # environment for references, configs and locals
 validateEnvironment "env"
 validateEnvironment "env/.config"
-validateEnvironment "env/.local"; validateEnvironment "env/.local/share"
+validateEnvironment "env/.local/share"
 validateEnvironment "env/.cache"
 
 # environment var references changed into private directories
+originEnv # save origin environment locations in variables
+
 ENV="$MOUNTDIR/env"
 export HOME=$ENV # comment this out if it makes problems
 export XDG_CONFIG_HOME="$ENV/.config"
