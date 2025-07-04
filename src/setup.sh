@@ -26,8 +26,8 @@ if [[ ! $MOUNTDIR ]]; then
     if [[ -f "$MOUNTFILE" && -f "$KEYFILE" ]]; then
         export MOUNTDIR=$(cat "$MOUNTFILE")
     else
-        if [[ "$SHLVL" -lt 2 ]]; then
-            echo "*$MOUNTFILE* & *$KEYFILE* not found - Setup installation initialized"
+        if [[ "$SHLVL" -eq 2 ]]; then
+            echo "*$MOUNTFILE* OR *$KEYFILE* not found - Setup installation initialized"
             makeInstall
         fi
     fi
